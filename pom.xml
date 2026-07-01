@@ -28,11 +28,6 @@ under the License.
 
     <dependencies>
         <!-- Carbon Mediation -->
-<!--        <dependency>-->
-<!--            <groupId>org.wso2.carbon.mediation</groupId>-->
-<!--            <artifactId>org.wso2.carbon.inbound.endpoint</artifactId>-->
-<!--            <version>${carbon.mediation.version}</version>-->
-<!--        </dependency>-->
         <dependency>
             <groupId>org.wso2.ei</groupId>
             <artifactId>org.wso2.micro.integrator.inbound.endpoint</artifactId>
