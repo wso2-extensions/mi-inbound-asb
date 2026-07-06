@@ -1,0 +1,74 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Output Schema for ASB Inbound Variable",
+  "description": "Schema for the structured message variable set by the ASB inbound endpoint.",
+  "properties": {
+    "attributes": {
+      "type": "object",
+      "description": "ASB-specific message attributes.",
+      "properties": {
+        "timeToLive": {
+          "type": "string",
+          "description": "Duration after which the message expires."
+        },
+        "deliveryCount": {
+          "type": "integer",
+          "description": "Number of times delivery has been attempted."
+        },
+        "enqueuedTime": {
+          "type": "string",
+          "description": "UTC time when the message was enqueued."
+        },
+        "sequenceNumber": {
+          "type": "integer",
+          "description": "Unique sequence number assigned by Service Bus."
+        },
+        "partitionKey": {
+          "type": "string",
+          "description": "Partition key for partitioned entities."
+        },
+        "to": {
+          "type": "string",
+          "description": "The 'to' address of the message."
+        },
+        "deadLetterSource": {
+          "type": "string",
+          "description": "Original entity name if the message was dead-lettered."
+        }
+      },
+      "required": ["deliveryCount", "sequenceNumber"]
+    },
+    "headers": {
+      "type": "object",
+      "description": "Message headers and application properties.",
+      "properties": {
+        "messageId": {
+          "type": "string",
+          "description": "Unique identifier of the message."
+        },
+        "correlationId": {
+          "type": "string",
+          "description": "Correlation identifier for request-reply patterns."
+        },
+        "contentType": {
+          "type": "string",
+          "description": "Content type of the message body."
+        },
+        "subject": {
+          "type": "string",
+          "description": "Application-specific label (also known as 'label')."
+        },
+        "replyTo": {
+          "type": "string",
+          "description": "Address of the entity to reply to."
+        }
+      },
+      "additionalProperties": {
+        "type": "string",
+        "description": "Application properties set by the sender."
+      }
+    }
+  },
+  "required": ["attributes", "headers"]
+}

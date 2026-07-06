@@ -186,9 +186,8 @@ under the License.
     </distributionManagement>
 
     <properties>
-        <carbon.mediation.version>4.4.10</carbon.mediation.version>
         <azure.servicebus.version>7.17.7</azure.servicebus.version>
-        <synapse.version>2.1.7-wso2v215</synapse.version>
+        <synapse.version>4.0.0-wso2v215</synapse.version>
         <axis2.version>1.6.1-wso2v94</axis2.version>
         <commons.io.version>2.11.0</commons.io.version>
         <commons.logging.version>1.2</commons.logging.version>

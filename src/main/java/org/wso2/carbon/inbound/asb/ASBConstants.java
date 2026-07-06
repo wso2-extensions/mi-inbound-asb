@@ -51,22 +51,28 @@ public final class ASBConstants {
     public static final String RECEIVE_MODE_RECEIVE_AND_DELETE = "RECEIVE_AND_DELETE";
 
     // Message context properties
-    public static final String ASB_MESSAGE_ID = "ASB_MESSAGE_ID";
-    public static final String ASB_CORRELATION_ID = "ASB_CORRELATION_ID";
-    public static final String ASB_CONTENT_TYPE = "ASB_CONTENT_TYPE";
-    public static final String ASB_SUBJECT = "ASB_SUBJECT";
-    public static final String ASB_TO = "ASB_TO";
-    public static final String ASB_REPLY_TO = "ASB_REPLY_TO";
-    public static final String ASB_PARTITION_KEY = "ASB_PARTITION_KEY";
-    public static final String ASB_TIME_TO_LIVE = "ASB_TIME_TO_LIVE";
-    public static final String ASB_DELIVERY_COUNT = "ASB_DELIVERY_COUNT";
-    public static final String ASB_ENQUEUED_TIME = "ASB_ENQUEUED_TIME";
-    public static final String ASB_SEQUENCE_NUMBER = "ASB_SEQUENCE_NUMBER";
-    public static final String ASB_DEAD_LETTER_SOURCE = "ASB_DEAD_LETTER_SOURCE";
+    public static final String ASB_MESSAGE_ID = "asb.messageId";
+    public static final String ASB_CORRELATION_ID = "asb.correlationId";
+    public static final String ASB_CONTENT_TYPE = "asb.contentType";
+    public static final String ASB_SUBJECT = "asb.subject";
+    public static final String ASB_TO = "asb.to";
+    public static final String ASB_REPLY_TO = "asb.replyTo";
+    public static final String ASB_PARTITION_KEY = "asb.partitionKey";
+    public static final String ASB_TIME_TO_LIVE = "asb.timeToLive";
+    public static final String ASB_DELIVERY_COUNT = "asb.deliveryCount";
+    public static final String ASB_ENQUEUED_TIME = "asb.enqueuedTime";
+    public static final String ASB_SEQUENCE_NUMBER = "asb.sequenceNumber";
+    public static final String ASB_DEAD_LETTER_SOURCE = "asb.deadLetterSource";
+
+    // Structured message variable
+    public static final String INBOUND_VARIABLE_NAME = "inboundVariableName";
+    public static final String DEFAULT_INBOUND_VARIABLE_NAME = "asb_inbound";
+    public static final String ASB_INBOUND_ATTRIBUTES = "attributes";
+    public static final String ASB_INBOUND_HEADERS = "headers";
 
     // Inbound settlement handshake
-    public static final String ASB_SETTLEMENT_LATCH = "_ASB_SETTLEMENT_LATCH";
-    public static final String ASB_SETTLEMENT_DECISION = "_ASB_SETTLEMENT_DECISION";
+    public static final String ASB_INBOUND_SETTLEMENT_LATCH = "_ASB_INBOUND_SETTLEMENT_LATCH";
+    public static final String ASB_INBOUND_SETTLEMENT_DECISION = "_ASB_INBOUND_SETTLEMENT_DECISION";
 
     // Keys within the decision map carried by the AtomicReference holder (must match the
     // connector's Constants.DECISION_KEY_* values).

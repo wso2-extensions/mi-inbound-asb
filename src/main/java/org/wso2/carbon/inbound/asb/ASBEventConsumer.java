@@ -109,7 +109,7 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
     @SuppressWarnings("unchecked")
     private void settleMessage(ServiceBusReceivedMessageContext context, MessageContext msgCtx, ServiceBusReceivedMessage message) {
         Map<String, String> decision = null;
-        Object holder = msgCtx.getProperty(ASBConstants.ASB_SETTLEMENT_DECISION);
+        Object holder = msgCtx.getProperty(ASBConstants.ASB_INBOUND_SETTLEMENT_DECISION);
         if (holder instanceof AtomicReference) {
             Object value = ((AtomicReference<?>) holder).get();
             if (value instanceof Map) {
@@ -289,8 +289,11 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
             messageProcessingTimeoutMs = maxLockRenewMs;
         }
 
+        String inboundVariableName = properties.getProperty(
+                ASBConstants.INBOUND_VARIABLE_NAME, ASBConstants.DEFAULT_INBOUND_VARIABLE_NAME);
+
         return new ASBMessageInjector(synapseEnvironment, injectingSeq, onErrorSeq, contentType, name,
-                awaitSettlement, messageProcessingTimeoutMs);
+                awaitSettlement, messageProcessingTimeoutMs, inboundVariableName);
     }
 
     private ServiceBusProcessorClient buildProcessorClient() {

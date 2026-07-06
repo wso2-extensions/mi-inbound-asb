@@ -172,6 +172,18 @@
               "required": "false",
               "helpTip": "In a clustered setup, this will run the inbound only in a single worker node."
             }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "inboundVariableName",
+              "displayName": "Inbound Variable Name",
+              "inputType": "string",
+              "required": "false",
+              "hidden": "true",
+              "defaultValue": "asb_inbound",
+              "helpTip": "Name of the variable that holds the structured message data (attributes and headers). Accessible in the mediation flow via this variable name."
+            }
           }
         ]
       }

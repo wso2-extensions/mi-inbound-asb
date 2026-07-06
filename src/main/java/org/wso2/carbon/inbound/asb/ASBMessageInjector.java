@@ -20,6 +20,7 @@ package org.wso2.carbon.inbound.asb;
 
 import com.azure.messaging.servicebus.ServiceBusReceivedMessage;
 import com.azure.messaging.servicebus.ServiceBusReceivedMessageContext;
+import com.google.gson.JsonObject;
 import org.apache.axiom.om.OMElement;
 import org.apache.axis2.AxisFault;
 import org.apache.axis2.Constants;
@@ -60,10 +61,12 @@ public class ASBMessageInjector {
     private final String name;
     private final boolean awaitSettlement;
     private final long settlementWaitTimeoutMs;
+    private final String inboundVariableName;
 
     public ASBMessageInjector(SynapseEnvironment synapseEnvironment, String injectingSequence,
                               String onErrorSequence, String contentType, String name,
-                              boolean awaitSettlement, long settlementWaitTimeoutMs) {
+                              boolean awaitSettlement, long settlementWaitTimeoutMs,
+                              String inboundVariableName) {
         this.synapseEnvironment = synapseEnvironment;
         this.injectingSequence = injectingSequence;
         this.onErrorSequence = onErrorSequence;
@@ -71,6 +74,7 @@ public class ASBMessageInjector {
         this.name = name;
         this.awaitSettlement = awaitSettlement;
         this.settlementWaitTimeoutMs = settlementWaitTimeoutMs;
+        this.inboundVariableName = inboundVariableName;
     }
 
     public MessageContext inject(ServiceBusReceivedMessageContext sbContext) {
@@ -82,12 +86,13 @@ public class ASBMessageInjector {
         CountDownLatch settlementLatch = null;
         if (awaitSettlement) {
             settlementLatch = new CountDownLatch(1);
-            synCtx.setProperty(ASBConstants.ASB_SETTLEMENT_LATCH, settlementLatch);
+            synCtx.setProperty(ASBConstants.ASB_INBOUND_SETTLEMENT_LATCH, settlementLatch);
             AtomicReference<Map<String, String>> atomicReference = new AtomicReference<>(new HashMap<>());
-            synCtx.setProperty(ASBConstants.ASB_SETTLEMENT_DECISION, atomicReference);
+            synCtx.setProperty(ASBConstants.ASB_INBOUND_SETTLEMENT_DECISION, atomicReference);
         }
         setMessageProperties(synCtx, message);
         setTransportHeaders(synCtx, message);
+        setInboundVariable(synCtx, message);
         try {
             setMessageBody(synCtx, message);
             injectToSequence(synCtx);
@@ -111,14 +116,15 @@ public class ASBMessageInjector {
     /**
      * Blocks the consumer thread until the mediation flow records a settlement decision (the
      * connector's inbound settlement mediator counts the latch down) or the wait times out.
-     * On timeout the caller falls back to its configured default action.
+     * On timeout the message lock will expire and the message will be redelivered.
      */
     private void awaitSettlementDecision(CountDownLatch settlementLatch, ServiceBusReceivedMessage message) {
         try {
             boolean decided = settlementLatch.await(settlementWaitTimeoutMs, TimeUnit.MILLISECONDS);
             if (!decided) {
                 LOG.warn("Timed out after " + settlementWaitTimeoutMs + " ms waiting for a settlement decision. "
-                        + "MessageId: " + message.getMessageId() + ". The default action will be applied.");
+                        + "MessageId: " + message.getMessageId()
+                        + ". The message lock will expire and the message will be redelivered.");
             }
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
@@ -185,6 +191,70 @@ public class ASBMessageInjector {
         });
 
         axis2MsgCtx.setProperty(org.apache.axis2.context.MessageContext.TRANSPORT_HEADERS, transportHeaders);
+    }
+
+    private void setInboundVariable(MessageContext synCtx, ServiceBusReceivedMessage message) {
+        Map<String, Object> asbInbound = new HashMap<>();
+
+        Map<String, Object> attributes = new HashMap<>();
+        if (message.getTimeToLive() != null) {
+            attributes.put("timeToLive", message.getTimeToLive().toString());
+        }
+        attributes.put("deliveryCount", message.getDeliveryCount());
+        if (message.getEnqueuedTime() != null) {
+            attributes.put("enqueuedTime", message.getEnqueuedTime().toString());
+        }
+        attributes.put("sequenceNumber", message.getSequenceNumber());
+        if (message.getPartitionKey() != null) {
+            attributes.put("partitionKey", message.getPartitionKey());
+        }
+        if (message.getTo() != null) {
+            attributes.put("to", message.getTo());
+        }
+        if (message.getDeadLetterSource() != null) {
+            attributes.put("deadLetterSource", message.getDeadLetterSource());
+        }
+
+        Map<String, Object> headers = new HashMap<>();
+        if (message.getMessageId() != null) {
+            headers.put("messageId", message.getMessageId());
+        }
+        if (message.getCorrelationId() != null) {
+            headers.put("correlationId", message.getCorrelationId());
+        }
+        if (message.getContentType() != null) {
+            headers.put("contentType", message.getContentType());
+        }
+        if (message.getSubject() != null) {
+            headers.put("subject", message.getSubject());
+        }
+        if (message.getReplyTo() != null) {
+            headers.put("replyTo", message.getReplyTo());
+        }
+        message.getApplicationProperties().forEach((key, value) -> {
+            if (key != null && value != null) {
+                headers.put(key, value.toString());
+            }
+        });
+
+        asbInbound.put(ASBConstants.ASB_INBOUND_ATTRIBUTES, convertMapToJson(attributes));
+        asbInbound.put(ASBConstants.ASB_INBOUND_HEADERS, convertMapToJson(headers));
+        synCtx.setVariable(inboundVariableName, asbInbound);
+    }
+
+    private JsonObject convertMapToJson(Map<String, Object> map) {
+
+        JsonObject jsonObject = new JsonObject();
+        map.forEach((key, value) -> {
+            if (value instanceof Number) {
+                jsonObject.addProperty(key, (Number) value);
+            } else if (value instanceof Boolean) {
+                jsonObject.addProperty(key, (Boolean) value);
+            } else {
+                jsonObject.addProperty(key, value.toString());
+            }
+        });
+        return jsonObject;
     }
 
     private void setMessageBody(MessageContext synCtx, ServiceBusReceivedMessage message) throws AxisFault {
