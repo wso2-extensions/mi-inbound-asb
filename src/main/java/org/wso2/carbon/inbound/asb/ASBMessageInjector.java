@@ -96,10 +96,10 @@ public class ASBMessageInjector {
         try {
             setMessageBody(synCtx, message);
             injectToSequence(synCtx);
-        } catch (AxisFault axisFault) {
-            LOG.error("Error while building the message", axisFault);
+        } catch (Exception e) {
+            LOG.error("Error while building the message", e);
             synCtx.setProperty(SynapseConstants.ERROR_CODE, GenericConstants.INBOUND_BUILD_ERROR);
-            synCtx.setProperty(SynapseConstants.ERROR_MESSAGE, axisFault.getMessage());
+            synCtx.setProperty(SynapseConstants.ERROR_MESSAGE, e.getMessage());
             SequenceMediator faultSequence = getFaultSequence(synCtx);
             if (faultSequence != null) {
                 faultSequence.mediate(synCtx);

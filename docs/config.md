@@ -18,8 +18,9 @@ consumption, automatic lock renewal, and configurable retry behavior for transie
 The endpoint supports two receive modes, controlled by the `receiveMode` parameter:
 
 - **`PEEK_LOCK`** (default) — the message is locked on the broker while your sequence processes it. The
-  message is **not** removed until the mediation flow explicitly settles it. Use the settlement mediator
-  from the Azure Service Bus connector to record one of the following decisions:
+  message is **not** removed until the mediation flow explicitly settles it. Use the
+  **Message Settlement (Only For Event Integration)** operations in the Azure Service Bus connector to
+  record one of the following decisions:
   - `complete` — remove the message (successful processing).
   - `abandon` — release the lock so the message is redelivered.
   - `defer` — defer the message for later retrieval by sequence number.
@@ -100,6 +101,7 @@ The endpoint supports two receive modes, controlled by the `receiveMode` paramet
 | `subscriptionName` | Name of the topic subscription to consume from. | Required when `entityType` is `topic` | String |
 | `contentType` | Content type used to build the message payload. Takes priority over the message's own content type. If neither is set, the SOAP builder is used. | No | `application/json`, `application/xml`, `text/plain`, ... |
 | `coordination` | In a clustered setup, runs the inbound only on a single worker node. | No | `true` (default), `false` |
+| `inboundVariableName` | Name of the variable that holds the structured message data (attributes and headers). | No | String (default `asb_inbound`) |
 
 ### Consumer
 
@@ -125,42 +127,75 @@ network failures.
 
 ## Accessing message metadata in the sequence
 
-Each injected message exposes Service Bus metadata to the mediation flow.
+Each injected message exposes Service Bus metadata to the mediation flow in three ways:
+
+### Structured variable
+
+A variable (default name `asb_inbound`, configurable via `inboundVariableName`) is set on the message
+context containing two child maps:
+
+**`attributes`** — ASB-specific message attributes:
+
+| Key | Description |
+| --- | ----------- |
+| `timeToLive` | Message time-to-live. |
+| `deliveryCount` | Number of times the message has been delivered. |
+| `enqueuedTime` | Time the message was enqueued. |
+| `sequenceNumber` | Broker-assigned sequence number. |
+| `partitionKey` | Partition key (set only if present). |
+| `to` | The `To` address (set only if present). |
+| `deadLetterSource` | Original entity if the message came from a dead-letter queue (set only if present). |
+
+**`headers`** — messaging headers and application properties:
+
+| Key | Description |
+| --- | ----------- |
+| `messageId` | Message id. |
+| `correlationId` | Correlation id. |
+| `contentType` | Message content type. |
+| `subject` | Message subject/label. |
+| `replyTo` | Reply-to address. |
+| *(custom keys)* | Any application properties set by the sender. |
+
+### Synapse message context properties
 
 The following are set as **Synapse message context properties** (access with `get-property('<name>')`):
 
 | Property | Description |
 | -------- | ----------- |
-| `ASB_TIME_TO_LIVE` | Message time-to-live. |
-| `ASB_DELIVERY_COUNT` | Number of times the message has been delivered. |
-| `ASB_ENQUEUED_TIME` | Time the message was enqueued. |
-| `ASB_SEQUENCE_NUMBER` | Broker-assigned sequence number. |
-| `ASB_PARTITION_KEY` | Partition key (set only if present). |
-| `ASB_TO` | The `To` address (set only if present). |
-| `ASB_DEAD_LETTER_SOURCE` | Original entity if the message came from a dead-letter queue (set only if present). |
+| `asb.timeToLive` | Message time-to-live. |
+| `asb.deliveryCount` | Number of times the message has been delivered. |
+| `asb.enqueuedTime` | Time the message was enqueued. |
+| `asb.sequenceNumber` | Broker-assigned sequence number. |
+| `asb.partitionKey` | Partition key (set only if present). |
+| `asb.to` | The `To` address (set only if present). |
+| `asb.deadLetterSource` | Original entity if the message came from a dead-letter queue (set only if present). |
+
+### Transport headers
 
 The following are set as **transport headers** (access with `get-property('transport', '<name>')`), along
 with every custom application property carried on the message:
 
 | Header | Description |
 | ------ | ----------- |
-| `ASB_MESSAGE_ID` | Message id. |
-| `ASB_CORRELATION_ID` | Correlation id. |
-| `ASB_CONTENT_TYPE` | Message content type. |
-| `ASB_SUBJECT` | Message subject/label. |
-| `ASB_REPLY_TO` | Reply-to address. |
+| `asb.messageId` | Message id. |
+| `asb.correlationId` | Correlation id. |
+| `asb.contentType` | Message content type. |
+| `asb.subject` | Message subject/label. |
+| `asb.replyTo` | Reply-to address. |
 
 ## Configuring a sample sequence
 
 ```xml
 <sequence xmlns="http://ws.apache.org/ns/synapse" name="request" onError="fault">
    <log level="custom">
-      <property name="messageId" expression="get-property('transport', 'ASB_MESSAGE_ID')"/>
-      <property name="deliveryCount" expression="get-property('ASB_DELIVERY_COUNT')"/>
+      <property name="messageId" expression="get-property('transport', 'asb.messageId')"/>
+      <property name="deliveryCount" expression="get-property('asb.deliveryCount')"/>
    </log>
    <log level="full"/>
    <!-- In PEEK_LOCK mode, record a settlement decision using the Azure Service Bus
         connector's settlement operation, for example: complete the message. -->
+  <asb.consumer_complete />
 </sequence>
 ```
 
@@ -173,6 +208,12 @@ A sample fault sequence:
       <property name="ERROR_CODE" expression="get-property('ERROR_CODE')"/>
       <property name="ERROR_MESSAGE" expression="get-property('ERROR_MESSAGE')"/>
    </log>
+  <asb.consumer_deadLetter >
+    <responseVariable >asb_consumer_deadLetter_1</responseVariable>
+    <overwriteBody >false</overwriteBody>
+    <deadLetterReason >DEADLETTERED_BY_RECEIVER</deadLetterReason>
+    <deadLetterErrorDescription >Fault in processing</deadLetterErrorDescription>
+  </asb.consumer_deadLetter>
    <drop/>
 </sequence>
 ```
