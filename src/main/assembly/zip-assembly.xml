@@ -21,6 +21,10 @@
             <outputDirectory>/resources</outputDirectory>
         </file>
         <file>
+            <source>src/main/resources/outputschema.json</source>
+            <outputDirectory>/resources</outputDirectory>
+        </file>
+        <file>
             <source>src/main/resources/connector.xml</source>
             <outputDirectory>/</outputDirectory>
         </file>

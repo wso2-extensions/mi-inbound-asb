@@ -220,6 +220,25 @@ public class ASBMessageInjector {
         if (message.getDeadLetterSource() != null) {
             attributes.put("deadLetterSource", message.getDeadLetterSource());
         }
+        if (message.getLockedUntil() != null) {
+            attributes.put("lockedUntil", message.getLockedUntil().toString());
+        }
+        if (message.getExpiresAt() != null) {
+            attributes.put("expiresAt", message.getExpiresAt().toString());
+        }
+        if (message.getScheduledEnqueueTime() != null) {
+            attributes.put("scheduledEnqueueTime", message.getScheduledEnqueueTime().toString());
+        }
+        attributes.put("enqueuedSequenceNumber", message.getEnqueuedSequenceNumber());
+        if (message.getState() != null) {
+            attributes.put("state", message.getState().toString());
+        }
+        if (message.getDeadLetterReason() != null) {
+            attributes.put("deadLetterReason", message.getDeadLetterReason());
+        }
+        if (message.getDeadLetterErrorDescription() != null) {
+            attributes.put("deadLetterErrorDescription", message.getDeadLetterErrorDescription());
+        }
 
         Map<String, Object> headers = new HashMap<>();
         if (message.getMessageId() != null) {
@@ -236,6 +255,9 @@ public class ASBMessageInjector {
         }
         if (message.getReplyTo() != null) {
             headers.put("replyTo", message.getReplyTo());
+        }
+        if (message.getReplyToSessionId() != null) {
+            headers.put("replyToSessionId", message.getReplyToSessionId());
         }
         message.getApplicationProperties().forEach((key, value) -> {
             if (key != null && value != null) {

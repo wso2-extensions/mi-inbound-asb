@@ -39,9 +39,37 @@
         "deadLetterSource": {
           "type": "string",
           "description": "Original entity name if the message was dead-lettered."
+        },
+        "lockedUntil": {
+          "type": "string",
+          "description": "UTC time when the message lock expires (PEEK_LOCK mode only)."
+        },
+        "expiresAt": {
+          "type": "string",
+          "description": "UTC time when the message expires."
+        },
+        "scheduledEnqueueTime": {
+          "type": "string",
+          "description": "Scheduled delivery time for scheduled messages."
+        },
+        "enqueuedSequenceNumber": {
+          "type": "integer",
+          "description": "Original sequence number before auto-forwarding."
+        },
+        "state": {
+          "type": "string",
+          "description": "Message state (e.g., Active, Deferred, Scheduled)."
+        },
+        "deadLetterReason": {
+          "type": "string",
+          "description": "Reason the message was dead-lettered (only when consuming from a dead-letter queue)."
+        },
+        "deadLetterErrorDescription": {
+          "type": "string",
+          "description": "Error description for dead-lettered messages (only when consuming from a dead-letter queue)."
         }
       },
-      "required": ["deliveryCount", "sequenceNumber"]
+      "required": ["deliveryCount", "sequenceNumber", "enqueuedSequenceNumber"]
     },
     "headers": {
       "type": "object",
@@ -66,6 +94,10 @@
         "replyTo": {
           "type": "string",
           "description": "Address of the entity to reply to."
+        },
+        "replyToSessionId": {
+          "type": "string",
+          "description": "Session identifier to use when replying to a session-enabled entity."
         }
       },
       "additionalProperties": {
