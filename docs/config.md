@@ -34,11 +34,16 @@ The endpoint supports two receive modes, controlled by the `receiveMode` paramet
   settlement is performed and there is no redelivery (at-most-once delivery). The settlement, lock, and
   processing-timeout parameters are ignored in this mode.
 
-> **Limitation: session-enabled entities are not supported.** This inbound endpoint uses a non-session
-> Service Bus processor client. Pointing it at a **session-enabled** queue or topic subscription
-> (created with *Enable sessions* / `requiresSession = true`) will fail at runtime, because the Azure
-> SDK requires a dedicated session receiver for such entities. Use only non-session queues and
-> subscriptions.
+### Session-enabled entities
+
+To consume from a session-enabled queue or subscription, set `sessionEnabled` to `true`. The endpoint
+will use a session-aware processor that automatically acquires sessions via `acceptNextSession()`. You
+can control parallelism with `maxConcurrentSessions` (number of sessions processed in parallel) and
+`maxConcurrentMessagesPerSession` (messages processed concurrently within a single session). Set
+`maxConcurrentMessagesPerSession` to `1` to preserve message ordering within each session.
+
+> **Note:** Pointing a session-enabled endpoint at a non-session entity (or vice versa) will fail at
+> runtime.
 
 ## Sample configuration
 
@@ -108,7 +113,11 @@ The endpoint supports two receive modes, controlled by the `receiveMode` paramet
 | Parameter | Description | Required | Possible values |
 | --------- | ----------- | -------- | --------------- |
 | `receiveMode` | Message receive mode. `PEEK_LOCK` allows settling messages after processing; `RECEIVE_AND_DELETE` removes messages immediately. | No | `PEEK_LOCK` (default), `RECEIVE_AND_DELETE` |
-| `maxConcurrentMessages` | Maximum number of messages processed concurrently. | No | Integer (default `1`) |
+| `sessionEnabled` | Set to `true` if the target queue or topic subscription is session-enabled. | No | `true`, `false` (default) |
+| `maxConcurrentMessages` | Maximum number of messages processed concurrently. Ignored when `sessionEnabled` is `true`. | No | Integer (default `1`) |
+| `maxConcurrentSessions` | Maximum number of sessions processed concurrently. Only used when `sessionEnabled` is `true`. | No | Integer (default `1`) |
+| `maxConcurrentMessagesPerSession` | Maximum number of messages processed concurrently within a single session. Set to `1` to preserve ordering. Only used when `sessionEnabled` is `true`. | No | Integer (default `1`) |
+| `sessionIdleTimeoutMs` | Maximum time (ms) to wait for a message on an idle session before releasing the session lock and acquiring the next available session. Only used when `sessionEnabled` is `true`. | No | Long (default `60000`) |
 | `prefetchCount` | Number of messages fetched from the broker and buffered locally. Higher values improve throughput but use more memory. `0` disables prefetching. | No | Integer (default `0`) |
 | `maxLockDurationMs` | Maximum duration (ms) to keep the message lock alive during processing. The lock is auto-renewed in the background until this duration is reached. PEEK_LOCK only. | No | Long (default `300000`) |
 | `messageProcessingTimeoutMs` | Maximum time (ms) to wait for a message to be fully processed (settled) before timing out. Should be lower than `maxLockDurationMs`. On timeout the lock expires and the message is redelivered. PEEK_LOCK only. | No | Long (default `240000`) |
@@ -142,6 +151,7 @@ context containing two child maps:
 | `deliveryCount` | Number of times the message has been delivered. |
 | `enqueuedTime` | Time the message was enqueued. |
 | `sequenceNumber` | Broker-assigned sequence number. |
+| `sessionId` | Session identifier (set only for session-enabled entities). |
 | `partitionKey` | Partition key (set only if present). |
 | `to` | The `To` address (set only if present). |
 | `deadLetterSource` | Original entity if the message came from a dead-letter queue (set only if present). |
@@ -167,6 +177,7 @@ The following are set as **Synapse message context properties** (access with `ge
 | `asb.deliveryCount` | Number of times the message has been delivered. |
 | `asb.enqueuedTime` | Time the message was enqueued. |
 | `asb.sequenceNumber` | Broker-assigned sequence number. |
+| `asb.sessionId` | Session identifier (set only for session-enabled entities). |
 | `asb.partitionKey` | Partition key (set only if present). |
 | `asb.to` | The `To` address (set only if present). |
 | `asb.deadLetterSource` | Original entity if the message came from a dead-letter queue (set only if present). |
@@ -189,8 +200,8 @@ with every custom application property carried on the message:
 ```xml
 <sequence xmlns="http://ws.apache.org/ns/synapse" name="request" onError="fault">
    <log level="custom">
-      <property name="messageId" expression="get-property('transport', 'asb.messageId')"/>
-      <property name="deliveryCount" expression="get-property('asb.deliveryCount')"/>
+      <property name="messageId" expression="${var.asb_inbound.headers.messageId}"/>
+      <property name="deliveryCount" expression="${var.asb_inbound.attributes.deliveryCount}"/>
    </log>
    <log level="full"/>
    <!-- In PEEK_LOCK mode, record a settlement decision using the Azure Service Bus

@@ -36,6 +36,12 @@ public final class ASBConstants {
     public static final String MAX_LOCK_DURATION_MS = "maxLockDurationMs";
     public static final String MAX_CONCURRENT_MESSAGES = "maxConcurrentMessages";
 
+    // Session parameters
+    public static final String SESSION_ENABLED = "sessionEnabled";
+    public static final String MAX_CONCURRENT_SESSIONS = "maxConcurrentSessions";
+    public static final String MAX_CONCURRENT_MESSAGES_PER_SESSION = "maxConcurrentMessagesPerSession";
+    public static final String SESSION_IDLE_TIMEOUT_MS = "sessionIdleTimeoutMs";
+
     // Retry parameters
     public static final String RETRY_MAX_RETRIES = "maxRetries";
     public static final String RETRY_DELAY_MS = "retryDelayMs";
@@ -57,6 +63,7 @@ public final class ASBConstants {
     public static final String ASB_SUBJECT = "asb.subject";
     public static final String ASB_TO = "asb.to";
     public static final String ASB_REPLY_TO = "asb.replyTo";
+    public static final String ASB_SESSION_ID = "asb.sessionId";
     public static final String ASB_PARTITION_KEY = "asb.partitionKey";
     public static final String ASB_TIME_TO_LIVE = "asb.timeToLive";
     public static final String ASB_DELIVERY_COUNT = "asb.deliveryCount";

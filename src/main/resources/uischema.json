@@ -154,6 +154,17 @@
           {
             "type": "attribute",
             "value": {
+              "name": "sessionEnabled",
+              "displayName": "Is Session Enabled?",
+              "inputType": "checkbox",
+              "required": "false",
+              "defaultValue": false,
+              "helpTip": "Set to true if the target queue or topic subscription is session-enabled."
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
               "name": "contentType",
               "displayName": "Content Type",
               "inputType": "string",
@@ -214,7 +225,44 @@
               "inputType": "string",
               "required": "false",
               "defaultValue": "1",
-              "helpTip": "Maximum number of messages to process concurrently."
+              "helpTip": "Maximum number of messages to process concurrently.",
+              "enableCondition": [{"sessionEnabled": false}]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "maxConcurrentSessions",
+              "displayName": "Max Concurrent Sessions",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "1",
+              "helpTip": "Maximum number of sessions to process concurrently.",
+              "enableCondition": [{"sessionEnabled": true}]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "maxConcurrentMessagesPerSession",
+              "displayName": "Max Concurrent Messages Per Session",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "1",
+              "helpTip": "Maximum number of messages to process concurrently within a single session. Messages within a session are processed in order when set to 1.",
+              "enableCondition": [{"sessionEnabled": true}]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "sessionIdleTimeoutMs",
+              "displayName": "Session Idle Timeout (ms)",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "60000",
+              "helpTip": "Maximum time in milliseconds to wait for a message on an idle session before releasing the session lock and acquiring the next available session. If not set, defaults to the Try Timeout value.",
+              "enableCondition": [{"sessionEnabled": true}]
             }
           },
           {

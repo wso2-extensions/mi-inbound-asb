@@ -152,6 +152,9 @@ public class ASBMessageInjector {
         }
         synCtx.setProperty(ASBConstants.ASB_SEQUENCE_NUMBER, message.getSequenceNumber());
 
+        if (message.getSessionId() != null) {
+            synCtx.setProperty(ASBConstants.ASB_SESSION_ID, message.getSessionId());
+        }
         if (message.getPartitionKey() != null) {
             synCtx.setProperty(ASBConstants.ASB_PARTITION_KEY, message.getPartitionKey());
         }
@@ -205,6 +208,9 @@ public class ASBMessageInjector {
             attributes.put("enqueuedTime", message.getEnqueuedTime().toString());
         }
         attributes.put("sequenceNumber", message.getSequenceNumber());
+        if (message.getSessionId() != null) {
+            attributes.put("sessionId", message.getSessionId());
+        }
         if (message.getPartitionKey() != null) {
             attributes.put("partitionKey", message.getPartitionKey());
         }

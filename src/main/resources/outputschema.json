@@ -24,6 +24,10 @@
           "type": "integer",
           "description": "Unique sequence number assigned by Service Bus."
         },
+        "sessionId": {
+          "type": "string",
+          "description": "Session identifier for session-enabled entities."
+        },
         "partitionKey": {
           "type": "string",
           "description": "Partition key for partitioned entities."

@@ -51,6 +51,9 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
 
     private static final int DEFAULT_PREFETCH_COUNT = 0;
     private static final int DEFAULT_MAX_CONCURRENT_MESSAGES = 1;
+    private static final int DEFAULT_MAX_CONCURRENT_SESSIONS = 1;
+    private static final int DEFAULT_MAX_CONCURRENT_MESSAGES_PER_SESSION = 1;
+    private static final long DEFAULT_SESSION_IDLE_TIMEOUT_MS = 60000;
     private static final long DEFAULT_MAX_LOCK_DURATION_MS = 300000;
     private static final int DEFAULT_MAX_RETRIES = 3;
     private static final long DEFAULT_RETRY_DELAY_MS = 1000;
@@ -205,7 +208,6 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
                 processorClient.stop();
                 LOG.info("ASB Consumer '" + name + "' stopped accepting new messages.");
 
-                // Wait for in-flight message processing to complete
                 long waitStart = System.currentTimeMillis();
                 long maxWaitMs = 30000;
                 while (inFlightMessages.get() > 0
@@ -300,33 +302,69 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
         String connectionString = properties.getProperty(ASBConstants.CONNECTION_STRING);
         ServiceBusReceiveMode receiveMode = getReceiveMode();
         int prefetchCount = getIntProperty(ASBConstants.PREFETCH_COUNT, DEFAULT_PREFETCH_COUNT);
-        int maxConcurrentMessages = getIntProperty(ASBConstants.MAX_CONCURRENT_MESSAGES, DEFAULT_MAX_CONCURRENT_MESSAGES);
-        if (maxConcurrentMessages < 1) {
-            throw new IllegalArgumentException("Parameter '" + ASBConstants.MAX_CONCURRENT_MESSAGES
-                    + "' must be at least 1, but was: " + maxConcurrentMessages);
-        }
         if (prefetchCount < 0) {
             throw new IllegalArgumentException("Parameter '" + ASBConstants.PREFETCH_COUNT
                     + "' must not be negative, but was: " + prefetchCount);
         }
 
-        ServiceBusClientBuilder.ServiceBusProcessorClientBuilder builder = new ServiceBusClientBuilder()
+        ServiceBusClientBuilder clientBuilder = new ServiceBusClientBuilder()
                 .connectionString(connectionString)
-                .retryOptions(getRetryOptions())
-                .processor()
-                .receiveMode(receiveMode)
-                .prefetchCount(prefetchCount)
-                .maxConcurrentCalls(maxConcurrentMessages)
-                .disableAutoComplete()
-                .processMessage(this::processMessage)
-                .processError(this::processError);
+                .retryOptions(getRetryOptions());
 
-        if (ServiceBusReceiveMode.PEEK_LOCK.equals(receiveMode)) {
-            long lockRenewDurationMs = getLongProperty(
-                    ASBConstants.MAX_LOCK_DURATION_MS, DEFAULT_MAX_LOCK_DURATION_MS);
-            builder.maxAutoLockRenewDuration(Duration.ofMillis(lockRenewDurationMs));
+        ServiceBusProcessorClient client;
+        if (isSessionEnabled()) {
+            int maxConcurrentSessions = getIntProperty(
+                    ASBConstants.MAX_CONCURRENT_SESSIONS, DEFAULT_MAX_CONCURRENT_SESSIONS);
+            int maxConcurrentMessagesPerSession = getIntProperty(
+                    ASBConstants.MAX_CONCURRENT_MESSAGES_PER_SESSION, DEFAULT_MAX_CONCURRENT_MESSAGES_PER_SESSION);
+
+            ServiceBusClientBuilder.ServiceBusSessionProcessorClientBuilder builder = clientBuilder
+                    .sessionProcessor()
+                    .receiveMode(receiveMode)
+                    .prefetchCount(prefetchCount)
+                    .maxConcurrentSessions(maxConcurrentSessions)
+                    .maxConcurrentCalls(maxConcurrentMessagesPerSession)
+                    .disableAutoComplete()
+                    .processMessage(this::processMessage)
+                    .processError(this::processError);
+
+            long sessionIdleTimeoutMs = getLongProperty(
+                    ASBConstants.SESSION_IDLE_TIMEOUT_MS, DEFAULT_SESSION_IDLE_TIMEOUT_MS);
+            builder.sessionIdleTimeout(Duration.ofMillis(sessionIdleTimeoutMs));
+
+            if (ServiceBusReceiveMode.PEEK_LOCK.equals(receiveMode)) {
+                long lockRenewDurationMs = getLongProperty(
+                        ASBConstants.MAX_LOCK_DURATION_MS, DEFAULT_MAX_LOCK_DURATION_MS);
+                builder.maxAutoLockRenewDuration(Duration.ofMillis(lockRenewDurationMs));
+            }
+            setEntityConfig(builder);
+            client = builder.buildProcessorClient();
+        } else {
+            int maxConcurrentMessages = getIntProperty(
+                    ASBConstants.MAX_CONCURRENT_MESSAGES, DEFAULT_MAX_CONCURRENT_MESSAGES);
+
+            ServiceBusClientBuilder.ServiceBusProcessorClientBuilder builder = clientBuilder
+                    .processor()
+                    .receiveMode(receiveMode)
+                    .prefetchCount(prefetchCount)
+                    .maxConcurrentCalls(maxConcurrentMessages)
+                    .disableAutoComplete()
+                    .processMessage(this::processMessage)
+                    .processError(this::processError);
+
+            if (ServiceBusReceiveMode.PEEK_LOCK.equals(receiveMode)) {
+                long lockRenewDurationMs = getLongProperty(
+                        ASBConstants.MAX_LOCK_DURATION_MS, DEFAULT_MAX_LOCK_DURATION_MS);
+                builder.maxAutoLockRenewDuration(Duration.ofMillis(lockRenewDurationMs));
+            }
+            setEntityConfig(builder);
+            client = builder.buildProcessorClient();
         }
 
+        return client;
+    }
+
+    private void setEntityConfig(ServiceBusClientBuilder.ServiceBusProcessorClientBuilder builder) {
         String entityType = properties.getProperty(ASBConstants.ENTITY_TYPE);
         if (ASBConstants.ENTITY_TYPE_QUEUE.equalsIgnoreCase(entityType)) {
             builder.queueName(properties.getProperty(ASBConstants.QUEUE_NAME));
@@ -334,8 +372,20 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
             builder.topicName(properties.getProperty(ASBConstants.TOPIC_NAME))
                     .subscriptionName(properties.getProperty(ASBConstants.SUBSCRIPTION_NAME));
         }
+    }
 
-        return builder.buildProcessorClient();
+    private void setEntityConfig(ServiceBusClientBuilder.ServiceBusSessionProcessorClientBuilder builder) {
+        String entityType = properties.getProperty(ASBConstants.ENTITY_TYPE);
+        if (ASBConstants.ENTITY_TYPE_QUEUE.equalsIgnoreCase(entityType)) {
+            builder.queueName(properties.getProperty(ASBConstants.QUEUE_NAME));
+        } else if (ASBConstants.ENTITY_TYPE_TOPIC.equalsIgnoreCase(entityType)) {
+            builder.topicName(properties.getProperty(ASBConstants.TOPIC_NAME))
+                    .subscriptionName(properties.getProperty(ASBConstants.SUBSCRIPTION_NAME));
+        }
+    }
+
+    private boolean isSessionEnabled() {
+        return Boolean.parseBoolean(properties.getProperty(ASBConstants.SESSION_ENABLED, "false"));
     }
 
     private ServiceBusReceiveMode getReceiveMode() {
