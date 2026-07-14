@@ -230,7 +230,9 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
                 LOG.info("ASB Consumer '" + name + "' stopped accepting new messages.");
 
                 long waitStart = System.currentTimeMillis();
-                long maxWaitMs = 30000;
+
+                // Wait up to maxLockDurationMs — beyond that the broker reclaims the message lock anyway.
+                long maxWaitMs = getLongProperty(ASBConstants.MAX_LOCK_DURATION_MS, DEFAULT_MAX_LOCK_DURATION_MS);
                 while (inFlightMessages.get() > 0
                         && (System.currentTimeMillis() - waitStart) < maxWaitMs) {
                     LOG.info("Waiting for " + inFlightMessages.get()
