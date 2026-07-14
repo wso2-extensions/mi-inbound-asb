@@ -1,0 +1,110 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "title": "Output Schema for ASB Inbound Variable",
+  "description": "Schema for the structured message variable set by the ASB inbound endpoint.",
+  "properties": {
+    "attributes": {
+      "type": "object",
+      "description": "ASB-specific message attributes.",
+      "properties": {
+        "timeToLive": {
+          "type": "string",
+          "description": "Duration after which the message expires."
+        },
+        "deliveryCount": {
+          "type": "integer",
+          "description": "Number of times delivery has been attempted."
+        },
+        "enqueuedTime": {
+          "type": "string",
+          "description": "UTC time when the message was enqueued."
+        },
+        "sequenceNumber": {
+          "type": "integer",
+          "description": "Unique sequence number assigned by Service Bus."
+        },
+        "sessionId": {
+          "type": "string",
+          "description": "Session identifier for session-enabled entities."
+        },
+        "partitionKey": {
+          "type": "string",
+          "description": "Partition key for partitioned entities."
+        },
+        "to": {
+          "type": "string",
+          "description": "The 'to' address of the message."
+        },
+        "deadLetterSource": {
+          "type": "string",
+          "description": "Original entity name if the message was dead-lettered."
+        },
+        "lockedUntil": {
+          "type": "string",
+          "description": "UTC time when the message lock expires (PEEK_LOCK mode only)."
+        },
+        "expiresAt": {
+          "type": "string",
+          "description": "UTC time when the message expires."
+        },
+        "scheduledEnqueueTime": {
+          "type": "string",
+          "description": "Scheduled delivery time for scheduled messages."
+        },
+        "enqueuedSequenceNumber": {
+          "type": "integer",
+          "description": "Original sequence number before auto-forwarding."
+        },
+        "state": {
+          "type": "string",
+          "description": "Message state (e.g., Active, Deferred, Scheduled)."
+        },
+        "deadLetterReason": {
+          "type": "string",
+          "description": "Reason the message was dead-lettered (only when consuming from a dead-letter queue)."
+        },
+        "deadLetterErrorDescription": {
+          "type": "string",
+          "description": "Error description for dead-lettered messages (only when consuming from a dead-letter queue)."
+        }
+      },
+      "required": ["deliveryCount", "sequenceNumber", "enqueuedSequenceNumber"]
+    },
+    "headers": {
+      "type": "object",
+      "description": "Message headers and application properties.",
+      "properties": {
+        "messageId": {
+          "type": "string",
+          "description": "Unique identifier of the message."
+        },
+        "correlationId": {
+          "type": "string",
+          "description": "Correlation identifier for request-reply patterns."
+        },
+        "contentType": {
+          "type": "string",
+          "description": "Content type of the message body."
+        },
+        "subject": {
+          "type": "string",
+          "description": "Application-specific label (also known as 'label')."
+        },
+        "replyTo": {
+          "type": "string",
+          "description": "Address of the entity to reply to."
+        },
+        "replyToSessionId": {
+          "type": "string",
+          "description": "Session identifier to use when replying to a session-enabled entity."
+        }
+      },
+      "additionalProperties": {
+        "type": "string",
+        "description": "Application properties set by the sender."
+      }
+    }
+  },
+  "required": ["attributes", "headers"]
+}

@@ -1,0 +1,359 @@
+{
+  "name": "asbInbound",
+  "type": "event-integration",
+  "title": "Azure Service Bus",
+  "id": "org.wso2.carbon.inbound.asb.ASBEventConsumer",
+  "elements": [
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Generic",
+        "isCollapsed": false,
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "name",
+              "displayName": "Event Integration Name",
+              "inputType": "string",
+              "required": "true",
+              "helpTip": "Unique identifier for the ASB event integration."
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "inbound.behavior",
+              "displayName": "Inbound Behavior",
+              "inputType": "string",
+              "required": "true",
+              "hidden": true,
+              "defaultValue": "eventBased"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "class",
+              "displayName": "Class Name",
+              "inputType": "string",
+              "required": "true",
+              "hidden": true,
+              "defaultValue": "org.wso2.carbon.inbound.asb.ASBEventConsumer"
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "generateSequences",
+              "displayName": "Automatically generate sequences",
+              "inputType": "checkbox",
+              "defaultValue": true
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "sequence",
+              "displayName": "Injecting Sequence Name",
+              "inputType": "keyOrExpression",
+              "keyType": "sequence",
+              "required": "true",
+              "enableCondition": [{"generateSequences": false}]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "onError",
+              "displayName": "Error Sequence Name",
+              "inputType": "keyOrExpression",
+              "keyType": "sequence",
+              "required": "true",
+              "enableCondition": [{"generateSequences": false}]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "suspend",
+              "displayName": "Suspend Inbound",
+              "inputType": "checkbox",
+              "defaultValue": false,
+              "hidden": "true",
+              "required": "false"
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Basic",
+        "isCollapsed": false,
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "connectionString",
+              "displayName": "Connection String",
+              "inputType": "string",
+              "required": "true",
+              "helpTip": "Azure Service Bus connection string."
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "entityType",
+              "displayName": "Entity Type",
+              "inputType": "combo",
+              "required": "true",
+              "defaultValue": "queue",
+              "comboValues": ["queue", "topic"],
+              "helpTip": "Type of Service Bus entity to consume from."
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "queueName",
+              "displayName": "Queue Name",
+              "inputType": "string",
+              "required": "true",
+              "defaultValue": "",
+              "helpTip": "Name of the Service Bus queue.",
+              "enableCondition": [{"entityType": "queue"}]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "topicName",
+              "displayName": "Topic Name",
+              "inputType": "string",
+              "required": "true",
+              "defaultValue": "",
+              "helpTip": "Name of the Service Bus topic.",
+              "enableCondition": [{"entityType": "topic"}]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "subscriptionName",
+              "displayName": "Subscription Name",
+              "inputType": "string",
+              "required": "true",
+              "defaultValue": "",
+              "helpTip": "Name of the topic subscription.",
+              "enableCondition": [{"entityType": "topic"}]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "sessionEnabled",
+              "displayName": "Is Session Enabled?",
+              "inputType": "checkbox",
+              "required": "false",
+              "defaultValue": false,
+              "helpTip": "Set to true if the target queue or topic subscription is session-enabled."
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "contentType",
+              "displayName": "Content Type",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "",
+              "helpTip": "Content type used for message parsing. Takes priority over the message's content type. If neither is set, the SOAP builder is used."
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "coordination",
+              "displayName": "Coordination",
+              "inputType": "checkbox",
+              "defaultValue": true,
+              "required": "false",
+              "helpTip": "In a clustered setup, this will run the inbound only in a single worker node."
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "inboundVariableName",
+              "displayName": "Inbound Variable Name",
+              "inputType": "string",
+              "required": "true",
+              "defaultValue": "asb_inbound",
+              "helpTip": "Name of the variable that holds the structured message data (attributes and headers). Accessible in the mediation flow via this variable name."
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Consumer",
+        "isCollapsed": false,
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "receiveMode",
+              "displayName": "Receive Mode",
+              "inputType": "combo",
+              "required": "false",
+              "defaultValue": "PEEK_LOCK",
+              "comboValues": ["PEEK_LOCK", "RECEIVE_AND_DELETE"],
+              "helpTip": "Message receive mode. PEEK_LOCK allows settling messages after processing. RECEIVE_AND_DELETE removes messages immediately."
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "maxConcurrentConsumers",
+              "displayName": "Max Concurrent Consumers",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "1",
+              "helpTip": "Maximum number of concurrent consumers processing messages.",
+              "enableCondition": [{"sessionEnabled": false}]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "maxConcurrentSessions",
+              "displayName": "Max Concurrent Sessions",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "1",
+              "helpTip": "Maximum number of sessions to process concurrently.",
+              "enableCondition": [{"sessionEnabled": true}]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "maxConcurrentConsumersPerSession",
+              "displayName": "Max Concurrent Consumers Per Session",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "1",
+              "helpTip": "Maximum number of concurrent consumers processing messages within a single session. Messages within a session are processed in order when set to 1.",
+              "enableCondition": [{"sessionEnabled": true}]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "sessionIdleTimeoutMs",
+              "displayName": "Session Idle Timeout (ms)",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "60000",
+              "helpTip": "Maximum time in milliseconds to wait for a message on an idle session before releasing the session lock and acquiring the next available session. If not set, defaults to the Try Timeout value.",
+              "enableCondition": [{"sessionEnabled": true}]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "prefetchCount",
+              "displayName": "Prefetch Count",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "0",
+              "helpTip": "Number of messages to fetch from the broker and buffer locally for faster processing. Higher values improve throughput but use more memory. 0 disables prefetching."
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "maxLockDurationMs",
+              "displayName": "Max Lock Duration (ms)",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "300000",
+              "helpTip": "Maximum duration in milliseconds to keep the message lock alive during processing. The lock is automatically renewed in the background until this duration is reached (PEEK_LOCK mode only).",
+              "enableCondition": [{"receiveMode": "PEEK_LOCK"}]
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "messageProcessingTimeoutMs",
+              "displayName": "Message Processing Timeout (ms)",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "240000",
+              "helpTip": "Maximum time in milliseconds to wait for the message to be fully processed before timing out. Must be lower than Max Lock Duration. If the timeout is exceeded, the message lock will expire and the message will be redelivered.",
+              "enableCondition": [{"receiveMode": "PEEK_LOCK"}]
+            }
+          }
+        ]
+      }
+    },
+    {
+      "type": "attributeGroup",
+      "value": {
+        "groupName": "Resilience",
+        "isCollapsed": true,
+        "elements": [
+          {
+            "type": "attribute",
+            "value": {
+              "name": "maxRetries",
+              "displayName": "Max Retries",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "3",
+              "helpTip": "Maximum number of retry attempts for transient connection or network failures."
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "retryDelayMs",
+              "displayName": "Retry Delay (ms)",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "1000",
+              "helpTip": "Initial delay in milliseconds between retry attempts. Increases exponentially with each retry up to Retry Max Delay."
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "retryMaxDelayMs",
+              "displayName": "Retry Max Delay (ms)",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "30000",
+              "helpTip": "Maximum delay in milliseconds between retry attempts."
+            }
+          },
+          {
+            "type": "attribute",
+            "value": {
+              "name": "tryTimeoutMs",
+              "displayName": "Try Timeout (ms)",
+              "inputType": "string",
+              "required": "false",
+              "defaultValue": "60000",
+              "helpTip": "Maximum duration in milliseconds to wait for a single operation (e.g., receive, settle) to complete before timing out."
+            }
+          }
+        ]
+      }
+    }
+  ]
+}
