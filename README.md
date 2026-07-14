@@ -6,8 +6,8 @@ Service Bus namespace using a connection string and consumes messages from a **q
 subscription**, injecting each message into a mediation sequence.
 
 It is built on top of the Azure `ServiceBusProcessorClient`, so it supports concurrent consumption,
-automatic lock renewal, configurable retry behavior for transient failures, and message settlement
-(`complete` / `abandon` / `defer` / `deadLetter`) in `PEEK_LOCK` mode.
+automatic lock renewal, session-enabled entities, configurable retry behavior for transient failures,
+and message settlement (`complete` / `abandon` / `defer` / `deadLetter`) in `PEEK_LOCK` mode.
 
 ## Compatibility
 
@@ -21,8 +21,6 @@ To get started with the inbound endpoint, see [Configuring the Azure Service Bus
 Once configured, the endpoint consumes messages from the target queue or topic subscription and injects
 them into the configured sequence.
 
-> **Note:** Session-enabled queues and subscriptions are not supported. See the
-> [configuration guide](docs/config.md) for details.
 
 ## Building from the source
 
