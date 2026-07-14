@@ -21,7 +21,7 @@ under the License.
     <modelVersion>4.0.0</modelVersion>
     <groupId>org.wso2.integration.inbound</groupId>
     <artifactId>mi-inbound-asb</artifactId>
-    <version>0.9.0-SNAPSHOT</version>
+    <version>0.9.0</version>
     <name>ASB Inbound Listener</name>
     <url>http://wso2.org</url>
     <packaging>bundle</packaging>
@@ -114,7 +114,7 @@ under the License.
         <developerConnection>
             scm:git:https://github.com/wso2-extensions/mi-inbound-asb
         </developerConnection>
-        <tag>HEAD</tag>
+        <tag>v0.9.0</tag>
     </scm>
 
     <build>
