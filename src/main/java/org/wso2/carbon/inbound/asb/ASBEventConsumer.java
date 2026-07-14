@@ -252,6 +252,7 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
                 }
 
                 processorClient.close();
+                processorClient = null;
                 LOG.info("ASB Consumer '" + name + "' closed successfully.");
             } catch (Exception e) {
                 LOG.error("Error stopping ASB Consumer: " + name, e);
@@ -294,6 +295,14 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
         } else {
             throw new IllegalArgumentException(
                     "Invalid entityType: '" + entityType + "'. Must be 'queue' or 'topic'.");
+        }
+
+        String receiveMode = properties.getProperty(ASBConstants.RECEIVE_MODE);
+        if (receiveMode != null && !receiveMode.isEmpty()
+                && !ASBConstants.RECEIVE_MODE_PEEK_LOCK.equalsIgnoreCase(receiveMode)
+                && !ASBConstants.RECEIVE_MODE_RECEIVE_AND_DELETE.equalsIgnoreCase(receiveMode)) {
+            throw new IllegalArgumentException(
+                    "Invalid receiveMode: '" + receiveMode + "'. Must be 'PEEK_LOCK' or 'RECEIVE_AND_DELETE'.");
         }
     }
 
