@@ -46,13 +46,13 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
 
     private ServiceBusProcessorClient processorClient;
     private ASBMessageInjector messageInjector;
-    private volatile boolean isShuttingDown;
+    private volatile boolean isDestroyed;
     private final AtomicInteger inFlightMessages = new AtomicInteger(0);
 
     private static final int DEFAULT_PREFETCH_COUNT = 0;
-    private static final int DEFAULT_MAX_CONCURRENT_MESSAGES = 1;
+    private static final int DEFAULT_MAX_CONCURRENT_CONSUMERS = 1;
     private static final int DEFAULT_MAX_CONCURRENT_SESSIONS = 1;
-    private static final int DEFAULT_MAX_CONCURRENT_MESSAGES_PER_SESSION = 1;
+    private static final int DEFAULT_MAX_CONCURRENT_CONSUMERS_PER_SESSION = 1;
     private static final long DEFAULT_SESSION_IDLE_TIMEOUT_MS = 60000;
     private static final long DEFAULT_MAX_LOCK_DURATION_MS = 300000;
     private static final int DEFAULT_MAX_RETRIES = 3;
@@ -68,6 +68,10 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
     }
 
     public void listen() {
+        if (processorClient!=null && !isDestroyed) {
+            LOG.info("ASB Consumer '" + name + "' already running. Skipping start.");
+            return;
+        }
         LOG.info("Starting ASB Consumer: " + name);
         try {
             validateMandatoryParameters();
@@ -84,7 +88,7 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
     private void processMessage(ServiceBusReceivedMessageContext context) {
         inFlightMessages.incrementAndGet();
         try {
-            if (isShuttingDown) {
+            if (isDestroyed) {
                 if (ServiceBusReceiveMode.PEEK_LOCK.equals(getReceiveMode())) {
                     LOG.warn("Consumer '" + name + "' is shutting down. Abandoning message. MessageId: "
                             + context.getMessage().getMessageId());
@@ -163,7 +167,7 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
                             + ". The message lock will expire and the message will be redelivered.");
             }
         } catch (Exception e) {
-            if (isShuttingDown) {
+            if (isDestroyed) {
                 LOG.warn("Message settlement (" + action + ") interrupted during shutdown. "
                         + "MessageId: " + messageId
                         + ". The broker may have already processed the settlement. "
@@ -199,9 +203,26 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
                 context.getException());
     }
 
+    /**
+     * Resumes the ASB listener if it has been destroyed.
+     */
+    public void resume() {
+        if (processorClient == null || isDestroyed) {
+            listen();
+            isDestroyed = false;
+        }
+    }
+
+    /**
+     * Pauses the ASB listener by destroying its resources.
+     */
+    public void pause() {
+        destroy();
+    }
+
     public void destroy() {
         LOG.info("Stopping ASB Consumer: " + name);
-        isShuttingDown = true;
+        isDestroyed = true;
 
         if (processorClient != null) {
             try {
@@ -240,6 +261,10 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
         String connectionString = properties.getProperty(ASBConstants.CONNECTION_STRING);
         if (connectionString == null || connectionString.isEmpty()) {
             throw new IllegalArgumentException("Parameter '" + ASBConstants.CONNECTION_STRING + "' is required.");
+        }
+
+        if (injectingSeq == null || injectingSeq.isEmpty()) {
+            throw new IllegalArgumentException("Injecting sequence name is required for the inbound endpoint.");
         }
 
         String entityType = properties.getProperty(ASBConstants.ENTITY_TYPE);
@@ -315,15 +340,15 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
         if (isSessionEnabled()) {
             int maxConcurrentSessions = getIntProperty(
                     ASBConstants.MAX_CONCURRENT_SESSIONS, DEFAULT_MAX_CONCURRENT_SESSIONS);
-            int maxConcurrentMessagesPerSession = getIntProperty(
-                    ASBConstants.MAX_CONCURRENT_MESSAGES_PER_SESSION, DEFAULT_MAX_CONCURRENT_MESSAGES_PER_SESSION);
+            int maxConcurrentConsumersPerSession = getIntProperty(
+                    ASBConstants.MAX_CONCURRENT_CONSUMERS_PER_SESSION, DEFAULT_MAX_CONCURRENT_CONSUMERS_PER_SESSION);
 
             ServiceBusClientBuilder.ServiceBusSessionProcessorClientBuilder builder = clientBuilder
                     .sessionProcessor()
                     .receiveMode(receiveMode)
                     .prefetchCount(prefetchCount)
                     .maxConcurrentSessions(maxConcurrentSessions)
-                    .maxConcurrentCalls(maxConcurrentMessagesPerSession)
+                    .maxConcurrentCalls(maxConcurrentConsumersPerSession)
                     .disableAutoComplete()
                     .processMessage(this::processMessage)
                     .processError(this::processError);
@@ -340,14 +365,14 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
             setEntityConfig(builder);
             client = builder.buildProcessorClient();
         } else {
-            int maxConcurrentMessages = getIntProperty(
-                    ASBConstants.MAX_CONCURRENT_MESSAGES, DEFAULT_MAX_CONCURRENT_MESSAGES);
+            int maxConcurrentConsumers = getIntProperty(
+                    ASBConstants.MAX_CONCURRENT_CONSUMERS, DEFAULT_MAX_CONCURRENT_CONSUMERS);
 
             ServiceBusClientBuilder.ServiceBusProcessorClientBuilder builder = clientBuilder
                     .processor()
                     .receiveMode(receiveMode)
                     .prefetchCount(prefetchCount)
-                    .maxConcurrentCalls(maxConcurrentMessages)
+                    .maxConcurrentCalls(maxConcurrentConsumers)
                     .disableAutoComplete()
                     .processMessage(this::processMessage)
                     .processError(this::processError);

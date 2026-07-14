@@ -318,10 +318,6 @@ public class ASBMessageInjector {
     }
 
     private void injectToSequence(MessageContext synCtx) {
-        if (injectingSequence == null || injectingSequence.isEmpty()) {
-            LOG.error("Injecting sequence name is not specified.");
-            return;
-        }
         SequenceMediator seq = (SequenceMediator) synapseEnvironment
                 .getSynapseConfiguration().getSequence(injectingSequence);
         if (seq != null) {

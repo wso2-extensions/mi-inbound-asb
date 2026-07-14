@@ -190,8 +190,7 @@
               "name": "inboundVariableName",
               "displayName": "Inbound Variable Name",
               "inputType": "string",
-              "required": "false",
-              "hidden": "true",
+              "required": "true",
               "defaultValue": "asb_inbound",
               "helpTip": "Name of the variable that holds the structured message data (attributes and headers). Accessible in the mediation flow via this variable name."
             }
@@ -220,12 +219,12 @@
           {
             "type": "attribute",
             "value": {
-              "name": "maxConcurrentMessages",
-              "displayName": "Max Concurrent Messages",
+              "name": "maxConcurrentConsumers",
+              "displayName": "Max Concurrent Consumers",
               "inputType": "string",
               "required": "false",
               "defaultValue": "1",
-              "helpTip": "Maximum number of messages to process concurrently.",
+              "helpTip": "Maximum number of concurrent consumers processing messages.",
               "enableCondition": [{"sessionEnabled": false}]
             }
           },
@@ -244,12 +243,12 @@
           {
             "type": "attribute",
             "value": {
-              "name": "maxConcurrentMessagesPerSession",
-              "displayName": "Max Concurrent Messages Per Session",
+              "name": "maxConcurrentConsumersPerSession",
+              "displayName": "Max Concurrent Consumers Per Session",
               "inputType": "string",
               "required": "false",
               "defaultValue": "1",
-              "helpTip": "Maximum number of messages to process concurrently within a single session. Messages within a session are processed in order when set to 1.",
+              "helpTip": "Maximum number of concurrent consumers processing messages within a single session. Messages within a session are processed in order when set to 1.",
               "enableCondition": [{"sessionEnabled": true}]
             }
           },

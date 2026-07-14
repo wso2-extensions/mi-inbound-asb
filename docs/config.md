@@ -39,8 +39,8 @@ The endpoint supports two receive modes, controlled by the `receiveMode` paramet
 To consume from a session-enabled queue or subscription, set `sessionEnabled` to `true`. The endpoint
 will use a session-aware processor that automatically acquires sessions via `acceptNextSession()`. You
 can control parallelism with `maxConcurrentSessions` (number of sessions processed in parallel) and
-`maxConcurrentMessagesPerSession` (messages processed concurrently within a single session). Set
-`maxConcurrentMessagesPerSession` to `1` to preserve message ordering within each session.
+`maxConcurrentConsumersPerSession` (messages processed concurrently within a single session). Set
+`maxConcurrentConsumersPerSession` to `1` to preserve message ordering within each session.
 
 > **Note:** Pointing a session-enabled endpoint at a non-session entity (or vice versa) will fail at
 > runtime.
@@ -63,7 +63,7 @@ can control parallelism with `maxConcurrentSessions` (number of sessions process
       <parameter name="entityType">queue</parameter>
       <parameter name="queueName">orders</parameter>
       <parameter name="receiveMode">PEEK_LOCK</parameter>
-      <parameter name="maxConcurrentMessages">1</parameter>
+      <parameter name="maxConcurrentConsumers">1</parameter>
       <parameter name="maxLockDurationMs">300000</parameter>
       <parameter name="messageProcessingTimeoutMs">240000</parameter>
       <parameter name="contentType">application/json</parameter>
@@ -114,9 +114,9 @@ can control parallelism with `maxConcurrentSessions` (number of sessions process
 | --------- | ----------- | -------- | --------------- |
 | `receiveMode` | Message receive mode. `PEEK_LOCK` allows settling messages after processing; `RECEIVE_AND_DELETE` removes messages immediately. | No | `PEEK_LOCK` (default), `RECEIVE_AND_DELETE` |
 | `sessionEnabled` | Set to `true` if the target queue or topic subscription is session-enabled. | No | `true`, `false` (default) |
-| `maxConcurrentMessages` | Maximum number of messages processed concurrently. Ignored when `sessionEnabled` is `true`. | No | Integer (default `1`) |
+| `maxConcurrentConsumers` | Maximum number of concurrent consumers processing messages. Ignored when `sessionEnabled` is `true`. | No | Integer (default `1`) |
 | `maxConcurrentSessions` | Maximum number of sessions processed concurrently. Only used when `sessionEnabled` is `true`. | No | Integer (default `1`) |
-| `maxConcurrentMessagesPerSession` | Maximum number of messages processed concurrently within a single session. Set to `1` to preserve ordering. Only used when `sessionEnabled` is `true`. | No | Integer (default `1`) |
+| `maxConcurrentConsumersPerSession` | Maximum number of concurrent consumers processing messages within a single session. Set to `1` to preserve ordering. Only used when `sessionEnabled` is `true`. | No | Integer (default `1`) |
 | `sessionIdleTimeoutMs` | Maximum time (ms) to wait for a message on an idle session before releasing the session lock and acquiring the next available session. Only used when `sessionEnabled` is `true`. | No | Long (default `60000`) |
 | `prefetchCount` | Number of messages fetched from the broker and buffered locally. Higher values improve throughput but use more memory. `0` disables prefetching. | No | Integer (default `0`) |
 | `maxLockDurationMs` | Maximum duration (ms) to keep the message lock alive during processing. The lock is auto-renewed in the background until this duration is reached. PEEK_LOCK only. | No | Long (default `300000`) |

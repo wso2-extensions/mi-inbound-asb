@@ -34,12 +34,12 @@ public final class ASBConstants {
     public static final String RECEIVE_MODE = "receiveMode";
     public static final String PREFETCH_COUNT = "prefetchCount";
     public static final String MAX_LOCK_DURATION_MS = "maxLockDurationMs";
-    public static final String MAX_CONCURRENT_MESSAGES = "maxConcurrentMessages";
+    public static final String MAX_CONCURRENT_CONSUMERS = "maxConcurrentConsumers";
 
     // Session parameters
     public static final String SESSION_ENABLED = "sessionEnabled";
     public static final String MAX_CONCURRENT_SESSIONS = "maxConcurrentSessions";
-    public static final String MAX_CONCURRENT_MESSAGES_PER_SESSION = "maxConcurrentMessagesPerSession";
+    public static final String MAX_CONCURRENT_CONSUMERS_PER_SESSION = "maxConcurrentConsumersPerSession";
     public static final String SESSION_IDLE_TIMEOUT_MS = "sessionIdleTimeoutMs";
 
     // Retry parameters
