@@ -68,7 +68,7 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
     }
 
     public void listen() {
-        if (processorClient != null && !isDestroyed) {
+        if (processorClient != null) {
             LOG.info("ASB Consumer '" + name + "' already running. Skipping start.");
             return;
         }
@@ -207,7 +207,7 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
      * Resumes the ASB listener if it has been destroyed.
      */
     public void resume() {
-        if (processorClient == null || isDestroyed) {
+        if (processorClient == null) {
             isDestroyed = false;
             listen();
         }
@@ -252,10 +252,11 @@ public class ASBEventConsumer extends GenericEventBasedConsumer {
                 }
 
                 processorClient.close();
-                processorClient = null;
                 LOG.info("ASB Consumer '" + name + "' closed successfully.");
             } catch (Exception e) {
                 LOG.error("Error stopping ASB Consumer: " + name, e);
+            } finally {
+                processorClient = null;
             }
         }
     }
